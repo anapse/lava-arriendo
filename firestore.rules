@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Reusable validation helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection testing
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // Washers collection
+    match /washers/{washerId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(washerId) &&
+        incoming().id is string && incoming().id.size() <= 64 &&
+        incoming().model is string && incoming().model.size() <= 100 &&
+        incoming().status in ['disponible', 'alquilada', 'mantenimiento'] &&
+        incoming().pricePerDay is number && incoming().pricePerDay >= 0;
+      allow update: if isSignedIn() && isValidId(washerId) &&
+        incoming().model is string && incoming().model.size() <= 100 &&
+        incoming().status in ['disponible', 'alquilada', 'mantenimiento'] &&
+        incoming().pricePerDay is number && incoming().pricePerDay >= 0;
+      allow delete: if isSignedIn() && isValidId(washerId);
+    }
+
+    // Customers collection
+    match /customers/{customerId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(customerId) &&
+        incoming().id is string && incoming().id.size() <= 64 &&
+        incoming().name is string && incoming().name.size() <= 100 &&
+        incoming().documentId is string && incoming().documentId.size() <= 30 &&
+        incoming().phone is string && incoming().phone.size() <= 30 &&
+        incoming().address is string && incoming().address.size() <= 200;
+      allow update: if isSignedIn() && isValidId(customerId) &&
+        incoming().name is string && incoming().name.size() <= 100 &&
+        incoming().documentId is string && incoming().documentId.size() <= 30 &&
+        incoming().phone is string && incoming().phone.size() <= 30 &&
+        incoming().address is string && incoming().address.size() <= 200;
+      allow delete: if isSignedIn() && isValidId(customerId);
+    }
+
+    // Rentals collection
+    match /rentals/{rentalId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(rentalId) &&
+        incoming().id is string && incoming().id.size() <= 64 &&
+        incoming().customerId is string && incoming().customerId.size() <= 64 &&
+        incoming().washerId is string && incoming().washerId.size() <= 64 &&
+        incoming().startDate is string && incoming().startDate.size() <= 20 &&
+        incoming().endDate is string && incoming().endDate.size() <= 20 &&
+        incoming().days is number && incoming().days > 0 &&
+        incoming().pricePerDay is number && incoming().pricePerDay >= 0 &&
+        incoming().totalAmount is number && incoming().totalAmount >= 0 &&
+        incoming().status in ['en_curso', 'entregado', 'por_vencer', 'vencido', 'finalizado', 'cancelado'];
+      allow update: if isSignedIn() && isValidId(rentalId) &&
+        incoming().status in ['en_curso', 'entregado', 'por_vencer', 'vencido', 'finalizado', 'cancelado'];
+      allow delete: if isSignedIn() && isValidId(rentalId);
+    }
+
+    // Payments collection
+    match /payments/{paymentId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(paymentId) &&
+        incoming().id is string && incoming().id.size() <= 64 &&
+        incoming().amount is number && incoming().amount >= 0 &&
+        incoming().date is string && incoming().date.size() <= 20 &&
+        incoming().paymentMethod is string && incoming().paymentMethod.size() <= 50 &&
+        incoming().status in ['Pagado', 'Pendiente', 'Anulado'];
+      allow update: if isSignedIn() && isValidId(paymentId) &&
+        incoming().amount is number && incoming().amount >= 0 &&
+        incoming().status in ['Pagado', 'Pendiente', 'Anulado'];
+      allow delete: if isSignedIn() && isValidId(paymentId);
+    }
+
+    // Activities log collection
+    match /activities/{activityId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(activityId) &&
+        incoming().id is string && incoming().id.size() <= 64 &&
+        incoming().type is string && incoming().type.size() <= 50 &&
+        incoming().description is string && incoming().description.size() <= 255 &&
+        incoming().timestamp is string && incoming().timestamp.size() <= 30;
+      allow update, delete: if false; // Append-only audit log
+    }
+  }
+}

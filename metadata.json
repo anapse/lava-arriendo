@@ -1,0 +1,8 @@
+{
+  "name": "LavArrienda - Sistema de Gestión de Lavadoras",
+  "description": "Sistema completo para control de alquiler, inventario de lavadoras, clientes, pagos, calendario y reportes en Pesos Colombianos con Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

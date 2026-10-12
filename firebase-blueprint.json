@@ -1,0 +1,128 @@
+{
+  "entities": {
+    "washer": {
+      "title": "Washer",
+      "description": "Washing machine asset in the rental inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "model": { "type": "string", "maxLength": 100 },
+        "brand": { "type": "string", "maxLength": 50 },
+        "capacityKg": { "type": "number" },
+        "type": { "type": "string", "enum": ["Carga frontal", "Carga superior"] },
+        "serialNumber": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["disponible", "alquilada", "mantenimiento"] },
+        "pricePerDay": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "model", "status", "pricePerDay"]
+    },
+    "customer": {
+      "title": "Customer",
+      "description": "Client renting washing machines",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 100 },
+        "documentId": { "type": "string", "maxLength": 30 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "address": { "type": "string", "maxLength": 200 },
+        "referenceLocation": { "type": "string", "maxLength": 200 },
+        "status": { "type": "string", "enum": ["Activo", "Inactivo", "Moroso"] },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "documentId", "phone", "address"]
+    },
+    "rental": {
+      "title": "Rental",
+      "description": "Rental transaction connecting customer and washer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 64 },
+        "customerName": { "type": "string", "maxLength": 100 },
+        "customerDoc": { "type": "string", "maxLength": 30 },
+        "customerPhone": { "type": "string", "maxLength": 30 },
+        "customerAddress": { "type": "string", "maxLength": 200 },
+        "washerId": { "type": "string", "maxLength": 64 },
+        "washerModel": { "type": "string", "maxLength": 100 },
+        "startDate": { "type": "string", "maxLength": 20 },
+        "startTime": { "type": "string", "maxLength": 10 },
+        "endDate": { "type": "string", "maxLength": 20 },
+        "endTime": { "type": "string", "maxLength": 10 },
+        "days": { "type": "number" },
+        "pricePerDay": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "advancePayment": { "type": "number" },
+        "balanceDue": { "type": "number" },
+        "deliveryType": { "type": "string", "maxLength": 50 },
+        "deliveryFee": { "type": "number" },
+        "status": { "type": "string", "enum": ["en_curso", "entregado", "por_vencer", "vencido", "finalizado", "cancelado"] },
+        "returnDate": { "type": "string", "maxLength": 30 },
+        "observations": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "customerId", "washerId", "startDate", "endDate", "days", "pricePerDay", "totalAmount", "status"]
+    },
+    "payment": {
+      "title": "Payment",
+      "description": "Payment receipt registered in the agency",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "rentalId": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 64 },
+        "customerName": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "maxLength": 20 },
+        "time": { "type": "string", "maxLength": 10 },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["Pagado", "Pendiente", "Anulado"] },
+        "referenceOrVoucher": { "type": "string", "maxLength": 100 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "amount", "date", "paymentMethod", "status"]
+    },
+    "activity": {
+      "title": "Activity",
+      "description": "Audit and operational activity logs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "type": { "type": "string", "maxLength": 50 },
+        "description": { "type": "string", "maxLength": 255 },
+        "timestamp": { "type": "string", "maxLength": 30 },
+        "relatedId": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "type", "description", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/washers/{washerId}": {
+      "schema": "washer",
+      "description": "Collection of all inventory washing machines"
+    },
+    "/customers/{customerId}": {
+      "schema": "customer",
+      "description": "Collection of registered agency clients"
+    },
+    "/rentals/{rentalId}": {
+      "schema": "rental",
+      "description": "Collection of all rental contracts and records"
+    },
+    "/payments/{paymentId}": {
+      "schema": "payment",
+      "description": "Collection of payment records and receipts"
+    },
+    "/activities/{activityId}": {
+      "schema": "activity",
+      "description": "Audit trail and operational events"
+    }
+  }
+}
