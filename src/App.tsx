@@ -16,6 +16,7 @@ import { ReturnRentalModal } from './components/ReturnRentalModal';
 import { EditRentalModal } from './components/EditRentalModal';
 import { ReceiptModal } from './components/ReceiptModal';
 import { AlertsModal } from './components/AlertsModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
 import { LoginScreen } from './components/LoginScreen';
 
 import {
@@ -55,6 +56,8 @@ import {
   saveWasher,
   deleteWasherDoc,
   saveCustomer,
+  deleteCustomerDoc,
+  deleteRentalDoc,
   savePayment,
   seedInitialFirestoreData
 } from './services/dataService';
@@ -84,6 +87,7 @@ export default function App() {
   const [rentalForReceipt, setRentalForReceipt] = useState<Rental | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isAlertsOpen, setIsAlertsOpen] = useState<boolean>(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: 'washer' | 'rental' | 'customer'; name: string } | null>(null);
 
   // Firebase Realtime Initialization
   useEffect(() => {
@@ -292,6 +296,24 @@ export default function App() {
     await deleteWasherDoc(id);
   };
 
+  const handleDeleteRental = async (id: string) => {
+    setRentals((prev) => prev.filter((r) => r.id !== id));
+    await deleteRentalDoc(id);
+  };
+
+  const handleDeleteCustomer = async (id: string) => {
+    setCustomers((prev) => prev.filter((c) => c.id !== id));
+    await deleteCustomerDoc(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === 'washer') await handleDeleteWasher(deleteTarget.id);
+    if (deleteTarget.type === 'rental') await handleDeleteRental(deleteTarget.id);
+    if (deleteTarget.type === 'customer') await handleDeleteCustomer(deleteTarget.id);
+    setDeleteTarget(null);
+  };
+
   // Handlers for Customers
   const handleSaveCustomer = async (customer: Customer) => {
     setCustomers((prev) => {
@@ -378,11 +400,11 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'lavadoras' && (
+             {activeTab === 'lavadoras' && (
               <WashersView
                 washers={washers}
                 onSaveWasher={handleSaveWasher}
-                onDeleteWasher={handleDeleteWasher}
+                onDeleteWasher={(id, name) => setDeleteTarget({ id, type: 'washer', name })}
                 onStartRentalForWasher={(wid) => {
                   setPreselectedWasherId(wid);
                   setIsNewRentalOpen(true);
@@ -398,6 +420,7 @@ export default function App() {
                 selectedCustomer={selectedCustomer}
                 onSelectCustomer={setSelectedCustomer}
                 onSaveCustomer={handleSaveCustomer}
+                onDeleteCustomer={(id, name) => setDeleteTarget({ id, type: 'customer', name })}
                 onStartRentalForCustomer={() => {
                   setIsNewRentalOpen(true);
                 }}
@@ -414,6 +437,7 @@ export default function App() {
                 onOpenReturnModal={(r) => setRentalToReturn(r)}
                 onOpenReceiptModal={(r) => setRentalForReceipt(r)}
                 onOpenEditModal={(r) => setRentalToEdit(r)}
+                onDeleteRental={(id, name) => setDeleteTarget({ id, type: 'rental', name })}
               />
             )}
 
@@ -575,6 +599,14 @@ export default function App() {
         rentals={rentals}
         washers={washers}
         onOpenReturnModal={(r) => setRentalToReturn(r)}
+      />
+
+      <ConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar eliminación"
+        message={`¿Estás seguro de que quieres eliminar este elemento: ${deleteTarget?.name}? Esta acción no se puede deshacer.`}
       />
     </div>
   );

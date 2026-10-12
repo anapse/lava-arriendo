@@ -542,6 +542,22 @@ export async function deleteWasherDoc(washerId: string): Promise<void> {
   }
 }
 
+export async function deleteRentalDoc(rentalId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'rentals', rentalId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `rentals/${rentalId}`);
+  }
+}
+
+export async function deleteCustomerDoc(customerId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'customers', customerId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `customers/${customerId}`);
+  }
+}
+
 /**
  * Customer CRUD helpers
  */

@@ -19,7 +19,7 @@ import { formatCOP } from '../utils/formatters';
 interface WashersViewProps {
   washers: Washer[];
   onSaveWasher: (washer: Washer) => Promise<void>;
-  onDeleteWasher: (id: string) => Promise<void>;
+  onDeleteWasher: (id: string, name: string) => void;
   onStartRentalForWasher: (washerId: string) => void;
 }
 
@@ -263,10 +263,17 @@ export const WashersView: React.FC<WashersViewProps> = ({
 
                 <button
                   onClick={() => openEditModal(w)}
-                  className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  className="p-2.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                   title="Editar datos de la lavadora"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => onDeleteWasher(w.id, w.model)}
+                  className="p-2.5 rounded-lg text-rose-500 hover:bg-rose-100 hover:text-rose-900 transition-colors"
+                  title="Eliminar lavadora"
+                >
+                  <Trash2 className="w-5 h-5" />
                 </button>
               </div>
             </div>

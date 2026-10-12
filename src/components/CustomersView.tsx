@@ -10,7 +10,8 @@ import {
   Calendar, 
   CreditCard, 
   X,
-  UserCheck
+  UserCheck,
+  Trash2
 } from 'lucide-react';
 import { Customer, Rental, Payment } from '../types';
 import { formatCOP } from '../utils/formatters';
@@ -22,6 +23,7 @@ interface CustomersViewProps {
   selectedCustomer: Customer | null;
   onSelectCustomer: (customer: Customer | null) => void;
   onSaveCustomer: (customer: Customer) => Promise<void>;
+  onDeleteCustomer: (id: string, name: string) => void;
   onStartRentalForCustomer: (customerId: string) => void;
 }
 
@@ -32,6 +34,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   selectedCustomer,
   onSelectCustomer,
   onSaveCustomer,
+  onDeleteCustomer,
   onStartRentalForCustomer,
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -169,7 +172,16 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
 
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                 <span className="text-slate-500">{rentalCount} {rentalCount === 1 ? 'alquiler' : 'alquileres'}</span>
-                <span className="text-blue-600 font-bold hover:underline">Ver ficha →</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteCustomer(c.id, c.name); }}
+                    className="p-2.5 rounded-lg text-rose-500 hover:bg-rose-100 hover:text-rose-900 transition-colors"
+                    title="Eliminar cliente"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                  <span className="text-blue-600 font-bold hover:underline">Ver ficha →</span>
+                </div>
               </div>
             </div>
           );

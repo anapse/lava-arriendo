@@ -10,7 +10,8 @@ import {
   CheckCircle, 
   AlertCircle,
   Filter,
-  Edit
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { Rental } from '../types';
 import { formatCOP, getComputedRentalStatus } from '../utils/formatters';
@@ -21,6 +22,7 @@ interface RentalsViewProps {
   onOpenReturnModal: (rental: Rental) => void;
   onOpenReceiptModal: (rental: Rental) => void;
   onOpenEditModal?: (rental: Rental) => void;
+  onDeleteRental: (id: string, name: string) => void;
 }
 
 export const RentalsView: React.FC<RentalsViewProps> = ({
@@ -29,6 +31,7 @@ export const RentalsView: React.FC<RentalsViewProps> = ({
   onOpenReturnModal,
   onOpenReceiptModal,
   onOpenEditModal,
+  onDeleteRental,
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'en_curso' | 'por_vencer' | 'vencido' | 'finalizado'>('todos');
@@ -250,13 +253,22 @@ export const RentalsView: React.FC<RentalsViewProps> = ({
                             </button>
                           )}
 
+                          {/* Eliminar */}
+                          <button
+                            onClick={() => onDeleteRental(r.id, `Contrato #${r.id}`)}
+                            className="p-2 rounded-lg text-rose-500 hover:bg-rose-100 hover:text-rose-900 transition-colors"
+                            title="Eliminar registro de alquiler"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+
                           {/* Recibo */}
                           <button
                             onClick={() => onOpenReceiptModal(r)}
-                            className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors"
+                            className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors"
                             title="Ver e imprimir comprobante"
                           >
-                            <Receipt className="w-4 h-4" />
+                            <Receipt className="w-5 h-5" />
                           </button>
 
                           {/* WhatsApp */}
@@ -267,10 +279,10 @@ export const RentalsView: React.FC<RentalsViewProps> = ({
                               )}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                              className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                               title="Contactar al cliente por WhatsApp"
                             >
-                              <MessageSquare className="w-4 h-4" />
+                              <MessageSquare className="w-5 h-5" />
                             </a>
                           )}
                         </div>
