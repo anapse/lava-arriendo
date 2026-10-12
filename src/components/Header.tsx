@@ -17,8 +17,6 @@ import { getComputedRentalStatus } from '../utils/formatters';
 interface HeaderProps {
   onOpenNewRental: () => void;
   onOpenNewPayment: () => void;
-  viewMode: 'desktop' | 'mobile';
-  setViewMode: (mode: 'desktop' | 'mobile') => void;
   rentals: Rental[];
   onOpenAlertsModal: () => void;
   currentUser?: { name: string; email: string; role: string };
@@ -29,8 +27,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   onOpenNewRental,
   onOpenNewPayment,
-  viewMode,
-  setViewMode,
   rentals,
   onOpenAlertsModal,
   currentUser,
@@ -77,34 +73,11 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-3">
-        {/* View Mode Toggle */}
-        <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/80">
-          <button
-            onClick={() => setViewMode('desktop')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-              viewMode === 'desktop'
-                ? 'bg-white text-blue-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-            title="Vista de escritorio completa"
-          >
-            <Monitor className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Escritorio</span>
-          </button>
-          <button
-            onClick={() => setViewMode('mobile')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-              viewMode === 'mobile'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-            title="Simulador de App Móvil como en el mockup"
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Simulador Móvil</span>
-          </button>
-        </div>
+      <div className="flex items-center gap-2.5">
+        {/* Currency reminder */}
+        <span className="hidden lg:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          🇨🇴 COP
+        </span>
 
         {/* Alerts Bell */}
         <button

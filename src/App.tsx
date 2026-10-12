@@ -11,7 +11,6 @@ import { DailyStatusView } from './components/DailyStatusView';
 import { ReportsView } from './components/ReportsView';
 import { SettingsView } from './components/SettingsView';
 import { UsersAdminView } from './components/UsersAdminView';
-import { MobileAppSimulator } from './components/MobileAppSimulator';
 import { RegisterRentalModal } from './components/RegisterRentalModal';
 import { ReturnRentalModal } from './components/ReturnRentalModal';
 import { EditRentalModal } from './components/EditRentalModal';
@@ -71,9 +70,8 @@ export default function App() {
     }
   });
 
-  // Navigation & View Mode
+  // Navigation & Active Tab
   const [activeTab, setActiveTab] = useState<NavigationTab>('inicio');
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
 
   // Application Data State
   const [washers, setWashers] = useState<Washer[]>(INITIAL_WASHERS);
@@ -295,8 +293,6 @@ export default function App() {
               setIsNewRentalOpen(true);
             }}
             onOpenNewPayment={() => setActiveTab('pagos')}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
             rentals={rentals}
             onOpenAlertsModal={() => setIsAlertsOpen(true)}
             currentUser={currentUser}
@@ -305,8 +301,8 @@ export default function App() {
           />
 
           <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-            {viewMode === 'mobile' ? (
-              <MobileAppSimulator
+            {activeTab === 'inicio' && (
+              <DashboardView
                 washers={washers}
                 customers={customers}
                 rentals={rentals}
@@ -316,122 +312,102 @@ export default function App() {
                   setPreselectedWasherId('');
                   setIsNewRentalOpen(true);
                 }}
-                onOpenReturnModal={(r) => setRentalToReturn(r)}
-                onSelectCustomer={(c) => setSelectedCustomer(c)}
-                onOpenNewCustomer={() => setActiveTab('clientes')}
                 onOpenNewPayment={() => setActiveTab('pagos')}
+                onOpenNewCustomer={() => setActiveTab('clientes')}
+                onOpenNewWasher={() => setActiveTab('lavadoras')}
+                onOpenReturnModal={(r) => setRentalToReturn(r)}
+                onSelectCustomer={(c) => {
+                  setSelectedCustomer(c);
+                  setActiveTab('clientes');
+                }}
+                onNavigateTab={setActiveTab}
+                onSaveQuickRental={handleSaveRental}
               />
-            ) : (
-              <>
-                {activeTab === 'inicio' && (
-                  <DashboardView
-                    washers={washers}
-                    customers={customers}
-                    rentals={rentals}
-                    payments={payments}
-                    activities={activities}
-                    onOpenNewRental={() => {
-                      setPreselectedWasherId('');
-                      setIsNewRentalOpen(true);
-                    }}
-                    onOpenNewPayment={() => setActiveTab('pagos')}
-                    onOpenNewCustomer={() => setActiveTab('clientes')}
-                    onOpenNewWasher={() => setActiveTab('lavadoras')}
-                    onOpenReturnModal={(r) => setRentalToReturn(r)}
-                    onSelectCustomer={(c) => {
-                      setSelectedCustomer(c);
-                      setActiveTab('clientes');
-                    }}
-                    onNavigateTab={setActiveTab}
-                    onSaveQuickRental={handleSaveRental}
-                  />
-                )}
-
-                {activeTab === 'lavadoras' && (
-                  <WashersView
-                    washers={washers}
-                    onSaveWasher={handleSaveWasher}
-                    onDeleteWasher={handleDeleteWasher}
-                    onStartRentalForWasher={(wid) => {
-                      setPreselectedWasherId(wid);
-                      setIsNewRentalOpen(true);
-                    }}
-                  />
-                )}
-
-                {activeTab === 'clientes' && (
-                  <CustomersView
-                    customers={customers}
-                    rentals={rentals}
-                    payments={payments}
-                    selectedCustomer={selectedCustomer}
-                    onSelectCustomer={setSelectedCustomer}
-                    onSaveCustomer={handleSaveCustomer}
-                    onStartRentalForCustomer={() => {
-                      setIsNewRentalOpen(true);
-                    }}
-                  />
-                )}
-
-                {activeTab === 'alquileres' && (
-                  <RentalsView
-                    rentals={rentals}
-                    onOpenNewRental={() => {
-                      setPreselectedWasherId('');
-                      setIsNewRentalOpen(true);
-                    }}
-                    onOpenReturnModal={(r) => setRentalToReturn(r)}
-                    onOpenReceiptModal={(r) => setRentalForReceipt(r)}
-                    onOpenEditModal={(r) => setRentalToEdit(r)}
-                  />
-                )}
-
-                {activeTab === 'pagos' && (
-                  <PaymentsView
-                    payments={payments}
-                    rentals={rentals}
-                    customers={customers}
-                    onSavePayment={handleSavePayment}
-                    onOpenReceiptModalForPayment={() => {}}
-                  />
-                )}
-
-                {activeTab === 'calendario' && (
-                  <CalendarView
-                    rentals={rentals}
-                    onOpenReturnModal={(r) => setRentalToReturn(r)}
-                  />
-                )}
-
-                {activeTab === 'estado' && (
-                  <DailyStatusView
-                    washers={washers}
-                    customers={customers}
-                    rentals={rentals}
-                    payments={payments}
-                    onOpenReturnModal={(r) => setRentalToReturn(r)}
-                  />
-                )}
-
-                {activeTab === 'reportes' && (
-                  <ReportsView
-                    washers={washers}
-                    customers={customers}
-                    rentals={rentals}
-                    payments={payments}
-                  />
-                )}
-
-                {activeTab === 'usuarios' && (
-                  <UsersAdminView
-                    currentUser={currentUser}
-                    onLogout={handleLogout}
-                  />
-                )}
-
-                {activeTab === 'configuracion' && <SettingsView />}
-              </>
             )}
+
+            {activeTab === 'lavadoras' && (
+              <WashersView
+                washers={washers}
+                onSaveWasher={handleSaveWasher}
+                onDeleteWasher={handleDeleteWasher}
+                onStartRentalForWasher={(wid) => {
+                  setPreselectedWasherId(wid);
+                  setIsNewRentalOpen(true);
+                }}
+              />
+            )}
+
+            {activeTab === 'clientes' && (
+              <CustomersView
+                customers={customers}
+                rentals={rentals}
+                payments={payments}
+                selectedCustomer={selectedCustomer}
+                onSelectCustomer={setSelectedCustomer}
+                onSaveCustomer={handleSaveCustomer}
+                onStartRentalForCustomer={() => {
+                  setIsNewRentalOpen(true);
+                }}
+              />
+            )}
+
+            {activeTab === 'alquileres' && (
+              <RentalsView
+                rentals={rentals}
+                onOpenNewRental={() => {
+                  setPreselectedWasherId('');
+                  setIsNewRentalOpen(true);
+                }}
+                onOpenReturnModal={(r) => setRentalToReturn(r)}
+                onOpenReceiptModal={(r) => setRentalForReceipt(r)}
+                onOpenEditModal={(r) => setRentalToEdit(r)}
+              />
+            )}
+
+            {activeTab === 'pagos' && (
+              <PaymentsView
+                payments={payments}
+                rentals={rentals}
+                customers={customers}
+                onSavePayment={handleSavePayment}
+                onOpenReceiptModalForPayment={() => {}}
+              />
+            )}
+
+            {activeTab === 'calendario' && (
+              <CalendarView
+                rentals={rentals}
+                onOpenReturnModal={(r) => setRentalToReturn(r)}
+              />
+            )}
+
+            {activeTab === 'estado' && (
+              <DailyStatusView
+                washers={washers}
+                customers={customers}
+                rentals={rentals}
+                payments={payments}
+                onOpenReturnModal={(r) => setRentalToReturn(r)}
+              />
+            )}
+
+            {activeTab === 'reportes' && (
+              <ReportsView
+                washers={washers}
+                customers={customers}
+                rentals={rentals}
+                payments={payments}
+              />
+            )}
+
+            {activeTab === 'usuarios' && (
+              <UsersAdminView
+                currentUser={currentUser}
+                onLogout={handleLogout}
+              />
+            )}
+
+            {activeTab === 'configuracion' && <SettingsView />}
           </main>
         </div>
       </div>
