@@ -3,13 +3,18 @@ import {
   Calendar as CalendarIcon, 
   Clock, 
   PlusCircle, 
-  Smartphone, 
-  Monitor, 
   Bell, 
   ShieldCheck,
   CreditCard,
   LogOut,
-  UserCheck
+  UserCheck,
+  Menu,
+  X,
+  WashingMachine,
+  FileText,
+  BarChart3,
+  TrendingUp,
+  Settings
 } from 'lucide-react';
 import { Rental } from '../types';
 import { getComputedRentalStatus } from '../utils/formatters';
@@ -35,19 +40,22 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
       setTimeStr(now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
-      setDateStr(now.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }));
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = String(now.getFullYear()).slice(-2);
+      setDateStr(`${day}/${month}/${year}`);
     };
     updateDateTime();
     const interval = setInterval(updateDateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Compute urgent alerts count
   const urgentCount = rentals.filter(r => {
     if (r.status === 'finalizado' || r.status === 'cancelado') return false;
     const computed = getComputedRentalStatus(r.status, r.endDate);
@@ -55,35 +63,32 @@ export const Header: React.FC<HeaderProps> = ({
   }).length;
 
   return (
-    <header className="h-18 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-      {/* Date & Time pill */}
-      <div className="flex items-center gap-4">
+    <header className="h-18 bg-white border-b border-slate-200 px-4 flex items-center justify-between sticky top-0 z-50 shadow-xs">
+      <div className="flex items-center gap-3">
+        {/* Hamburger Menu Trigger */}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="p-2 -ml-2 rounded-xl text-slate-600 hover:bg-slate-100 md:hidden"
+        >
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+
+        {/* Date & Time pill */}
         <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-xl text-slate-700 text-xs font-semibold">
           <CalendarIcon className="w-4 h-4 text-blue-600" />
-          <span>{dateStr || '11 de Octubre de 2026'}</span>
+          <span className="font-mono">{dateStr}</span>
           <span className="text-slate-300">|</span>
           <Clock className="w-4 h-4 text-slate-500" />
-          <span className="font-mono text-slate-800">{timeStr || '17:36:00'}</span>
+          <span className="font-mono text-slate-800">{timeStr}</span>
         </div>
-
-        {/* Currency reminder */}
-        <span className="hidden lg:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          🇨🇴 Pesos Colombianos (COP)
-        </span>
       </div>
 
       {/* Right controls */}
       <div className="flex items-center gap-2.5">
-        {/* Currency reminder */}
-        <span className="hidden lg:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          🇨🇴 COP
-        </span>
-
         {/* Alerts Bell */}
         <button
           onClick={onOpenAlertsModal}
-          className="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-          title="Ver alertas de vencimiento"
+          className="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
         >
           <Bell className="w-5 h-5" />
           {urgentCount > 0 && (
@@ -93,55 +98,30 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
-        {/* Quick Payment Button */}
-        <button
-          onClick={onOpenNewPayment}
-          className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-all"
-        >
-          <CreditCard className="w-4 h-4" />
-          <span>Registrar Pago</span>
-        </button>
-
         {/* Primary New Rental Button */}
         <button
           onClick={onOpenNewRental}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all cursor-pointer active:scale-95"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all"
         >
           <PlusCircle className="w-4 h-4" />
-          <span>Registrar Alquiler</span>
+          <span className="hidden sm:inline">Nuevo Alquiler</span>
         </button>
-
-        {/* Admin profile & Logout */}
-        <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
-          <button
-            onClick={() => onNavigateTab && onNavigateTab('usuarios')}
-            className="flex items-center gap-2 hover:opacity-85 transition-opacity text-left cursor-pointer"
-            title="Ir al panel de usuarios y administradores"
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-xs">
-              {currentUser?.name?.charAt(0) || 'D'}
-            </div>
-            <div className="hidden xl:block text-left">
-              <p className="text-xs font-bold text-slate-800 leading-tight">
-                {currentUser?.name || 'Administrador'}
-              </p>
-              <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> {currentUser?.role || 'Dueño Principal'}
-              </p>
-            </div>
-          </button>
-
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-1 cursor-pointer"
-              title="Cerrar sesión"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          )}
-        </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMenuOpen && (
+        <div className="absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-xl p-4 flex flex-col gap-2 z-40 md:hidden">
+          <button onClick={() => { onNavigateTab?.('usuarios'); setIsMenuOpen(false); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-100 font-bold">
+            <UserCheck className="w-5 h-5 text-blue-600" /> Gestionar Usuarios
+          </button>
+          <button onClick={() => { onNavigateTab?.('lavadoras'); setIsMenuOpen(false); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-100 font-bold">
+            <WashingMachine className="w-5 h-5 text-blue-600" /> Lavadoras
+          </button>
+          <button onClick={() => { onLogout?.(); setIsMenuOpen(false); }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-rose-50 text-rose-700 font-bold">
+            <LogOut className="w-5 h-5" /> Cerrar Sesión
+          </button>
+        </div>
+      )}
     </header>
   );
 };

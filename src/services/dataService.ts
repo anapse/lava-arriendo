@@ -8,10 +8,30 @@ import {
   getDocs 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { Washer, Customer, Rental, Payment, Activity } from '../types';
+import { Washer, Customer, Rental, Payment, Activity, UserAdmin } from '../types';
 export { testConnection } from '../firebase';
 
 // Default initial dataset in Colombian Pesos (COP)
+export const DEFAULT_ADMINS: UserAdmin[] = [
+  {
+    id: 'USR-01',
+    name: 'Dueño Principal',
+    email: 'anapse_video@hotmail.com',
+    role: 'Super Administrador',
+    passwordHint: '16546203',
+    lastLogin: 'Hoy (En sesión activa)',
+    createdAt: '2026-10-11',
+  },
+  {
+    id: 'USR-02',
+    name: 'Operador de Turno',
+    email: 'operador@lavarrienda.com',
+    role: 'Operador',
+    passwordHint: 'operador123',
+    lastLogin: '10/10/2026 18:30',
+    createdAt: '2026-10-09',
+  },
+];
 export const INITIAL_WASHERS: Washer[] = [
   { id: '01', model: 'LG 12kg (01)', brand: 'LG', capacityKg: 12, type: 'Carga frontal', serialNumber: 'LG-12-001', status: 'alquilada', pricePerDay: 35000, totalRentalsCount: 14, totalEarnings: 490000 },
   { id: '02', model: 'Samsung 10kg (02)', brand: 'Samsung', capacityKg: 10, type: 'Carga frontal', serialNumber: 'SM-10-002', status: 'disponible', pricePerDay: 30000, totalRentalsCount: 18, totalEarnings: 540000 },
@@ -259,6 +279,14 @@ export async function seedInitialFirestoreData(): Promise<void> {
       console.log('Seeding initial activities to Firestore...');
       for (const a of INITIAL_ACTIVITIES) {
         await setDoc(doc(db, 'activities', a.id), a);
+      }
+    }
+
+    const adminSnap = await getDocs(collection(db, 'admin_users'));
+    if (adminSnap.empty) {
+      console.log('Seeding initial admin users to Firestore...');
+      for (const u of DEFAULT_ADMINS) {
+        await setDoc(doc(db, 'admin_users', u.id), u);
       }
     }
   } catch (error) {
@@ -544,5 +572,38 @@ export async function savePayment(payment: Payment): Promise<void> {
     await setDoc(doc(db, 'activities', actId), activity);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `payments/${payment.id}`);
+  }
+}
+
+/**
+ * Admin Users CRUD & Subscription helpers
+ */
+export function subscribeToAdminUsers(callback: (users: UserAdmin[]) => void) {
+  const colRef = collection(db, 'admin_users');
+  return onSnapshot(colRef, (snapshot) => {
+    if (!snapshot.empty) {
+      const items = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as UserAdmin));
+      callback(items);
+    } else {
+      callback(DEFAULT_ADMINS);
+    }
+  }, (error) => {
+    handleFirestoreError(error, OperationType.LIST, 'admin_users');
+  });
+}
+
+export async function saveAdminUser(user: UserAdmin): Promise<void> {
+  try {
+    await setDoc(doc(db, 'admin_users', user.id), user);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `admin_users/${user.id}`);
+  }
+}
+
+export async function deleteAdminUserDoc(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'admin_users', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `admin_users/${id}`);
   }
 }

@@ -10,7 +10,8 @@ import {
   Settings,
   Sparkles,
   CloudCheck,
-  UserCheck
+  UserCheck,
+  LogOut
 } from 'lucide-react';
 import { NavigationTab } from '../types';
 
@@ -20,6 +21,7 @@ interface SidebarProps {
   washersCount: number;
   activeRentalsCount: number;
   firebaseConnected: boolean;
+  onLogout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -28,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   washersCount,
   activeRentalsCount,
   firebaseConnected,
+  onLogout,
 }) => {
   const menuItems: { id: NavigationTab; label: string; icon: React.ReactNode; badge?: number | string }[] = [
     { id: 'inicio', label: 'Inicio', icon: <Home className="w-5 h-5" /> },
@@ -106,16 +109,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Brand Mascot / Footer note */}
-      <div className="p-4 m-3 rounded-2xl bg-gradient-to-b from-blue-900/80 to-blue-950/80 border border-blue-800/60 text-center">
-        <div className="w-12 h-12 mx-auto rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-300 mb-2">
-          <WashingMachine className="w-6 h-6 animate-bounce" />
-        </div>
-        <p className="text-xs font-semibold text-cyan-200">Tu ropa limpia,</p>
-        <p className="text-[11px] text-blue-300">sin complicaciones</p>
-        <div className="mt-2 pt-2 border-t border-blue-800/60 text-[10px] text-blue-300/80 flex items-center justify-center gap-1">
+      {/* Brand Mascot / Footer note & Logout */}
+      <div className="p-3 m-3 rounded-2xl bg-gradient-to-b from-blue-900/80 to-blue-950/80 border border-blue-800/60 text-center space-y-2">
+        <div className="flex items-center justify-between text-[11px] text-blue-300 px-1">
           <span>Tarifas en COP ($)</span>
+          <span className="text-cyan-300 font-medium">LavArrienda</span>
         </div>
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-200 hover:text-white border border-rose-500/30 text-xs font-bold transition-all cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Cerrar Sesión</span>
+          </button>
+        )}
       </div>
     </aside>
   );

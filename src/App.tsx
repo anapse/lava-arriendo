@@ -24,7 +24,9 @@ import {
   Users,
   WashingMachine,
   CreditCard,
-  UserCheck
+  UserCheck,
+  TrendingUp,
+  Settings
 } from 'lucide-react';
 
 import {
@@ -332,6 +334,7 @@ export default function App() {
             washersCount={washers.length}
             activeRentalsCount={activeRentalsCount}
             firebaseConnected={firebaseConnected}
+            onLogout={handleLogout}
           />
         </div>
 
@@ -480,13 +483,13 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab('alquileres')}
+          onClick={() => setActiveTab('clientes')}
           className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg ${
-            activeTab === 'alquileres' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
+            activeTab === 'clientes' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
           }`}
         >
-          <FileText className="w-5 h-5" />
-          <span>Alquileres</span>
+          <Users className="w-5 h-5" />
+          <span>Usuarios</span>
         </button>
 
         <button
@@ -501,13 +504,13 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab('lavadoras')}
+          onClick={() => setActiveTab('estado')}
           className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg ${
-            activeTab === 'lavadoras' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
+            activeTab === 'estado' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
           }`}
         >
-          <WashingMachine className="w-5 h-5" />
-          <span>Lavadoras</span>
+          <TrendingUp className="w-5 h-5" />
+          <span>Estadísticas</span>
         </button>
 
         <button
@@ -521,13 +524,13 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab('usuarios')}
+          onClick={() => setActiveTab('configuracion')}
           className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg ${
-            activeTab === 'usuarios' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
+            activeTab === 'configuracion' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
           }`}
         >
-          <UserCheck className="w-5 h-5" />
-          <span>Dueño</span>
+          <Settings className="w-5 h-5" />
+          <span>Config</span>
         </button>
       </nav>
 

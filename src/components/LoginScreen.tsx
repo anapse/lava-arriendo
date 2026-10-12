@@ -35,7 +35,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       try {
         const savedUsers = JSON.parse(localStorage.getItem('lavarrienda_admin_users') || '[]');
         const matched = savedUsers.find(
-          (u: any) => u.email.toLowerCase() === cleanEmail && (u.passwordHint === cleanPw || cleanPw === '16546203')
+          (u: any) => 
+            (u.email.toLowerCase() === cleanEmail || u.name.toLowerCase() === cleanEmail) && 
+            (u.passwordHint === cleanPw || cleanPw === '16546203' || cleanPw === u.passwordHint)
         );
         if (matched) {
           const userObj = { name: matched.name, email: matched.email, role: matched.role };

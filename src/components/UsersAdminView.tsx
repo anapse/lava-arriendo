@@ -13,32 +13,12 @@ import {
   KeyRound
 } from 'lucide-react';
 import { UserAdmin } from '../types';
+import { subscribeToAdminUsers, saveAdminUser, deleteAdminUserDoc, DEFAULT_ADMINS } from '../services/dataService';
 
 interface UsersAdminViewProps {
   currentUser: { name: string; email: string; role: string };
   onLogout: () => void;
 }
-
-const DEFAULT_ADMINS: UserAdmin[] = [
-  {
-    id: 'USR-01',
-    name: 'Dueño Principal',
-    email: 'anapse_video@hotmail.com',
-    role: 'Super Administrador',
-    passwordHint: '16546203',
-    lastLogin: 'Hoy (En sesión activa)',
-    createdAt: '2026-10-11',
-  },
-  {
-    id: 'USR-02',
-    name: 'Operador de Turno',
-    email: 'operador@lavarrienda.com',
-    role: 'Operador',
-    passwordHint: 'operador123',
-    lastLogin: '10/10/2026 18:30',
-    createdAt: '2026-10-09',
-  },
-];
 
 export const UsersAdminView: React.FC<UsersAdminViewProps> = ({ currentUser, onLogout }) => {
   const [users, setUsers] = useState<UserAdmin[]>(() => {
@@ -58,13 +38,21 @@ export const UsersAdminView: React.FC<UsersAdminViewProps> = ({ currentUser, onL
   const [successMsg, setSuccessMsg] = useState<string>('');
 
   useEffect(() => {
-    localStorage.setItem('lavarrienda_admin_users', JSON.stringify(users));
-  }, [users]);
+    const unsubscribe = subscribeToAdminUsers((items) => {
+      if (items && items.length > 0) {
+        setUsers(items);
+        localStorage.setItem('lavarrienda_admin_users', JSON.stringify(items));
+      }
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const newUser: UserAdmin = {
-      id: 'USR-' + String(users.length + 1).padStart(2, '0'),
+      id: 'USR-' + Date.now(),
       name,
       email: email.trim().toLowerCase(),
       role,
@@ -72,7 +60,11 @@ export const UsersAdminView: React.FC<UsersAdminViewProps> = ({ currentUser, onL
       lastLogin: 'Sin ingresos aún',
       createdAt: new Date().toISOString().split('T')[0],
     };
-    setUsers([...users, newUser]);
+    const updated = [...users, newUser];
+    setUsers(updated);
+    localStorage.setItem('lavarrienda_admin_users', JSON.stringify(updated));
+    await saveAdminUser(newUser);
+
     setIsAddModalOpen(false);
     setSuccessMsg(`Usuario ${name} agregado correctamente con rol de ${role}.`);
     setName('');
@@ -80,9 +72,12 @@ export const UsersAdminView: React.FC<UsersAdminViewProps> = ({ currentUser, onL
     setPassword('');
   };
 
-  const handleDeleteUser = (id: string) => {
+  const handleDeleteUser = async (id: string) => {
     if (confirm('¿Deseas eliminar este usuario de la administración?')) {
-      setUsers(users.filter((u) => u.id !== id));
+      const updated = users.filter((u) => u.id !== id);
+      setUsers(updated);
+      localStorage.setItem('lavarrienda_admin_users', JSON.stringify(updated));
+      await deleteAdminUserDoc(id);
     }
   };
 
