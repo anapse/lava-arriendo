@@ -346,8 +346,8 @@ export default function App() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] text-slate-800 flex flex-col antialiased selection:bg-blue-600 selection:text-white pb-24 md:pb-0">
-      <div className="flex flex-1 min-h-screen">
+    <div className="min-h-screen bg-[#F4F7FB] text-slate-800 flex flex-col antialiased selection:bg-blue-600 selection:text-white pb-24 md:pb-0 overflow-x-hidden">
+      <div className="flex flex-1">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
           <Sidebar
