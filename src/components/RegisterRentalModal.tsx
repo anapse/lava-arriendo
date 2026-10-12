@@ -209,17 +209,17 @@ export const RegisterRentalModal: React.FC<RegisterRentalModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="bg-[#0A4D9A] text-white px-6 py-4 flex items-center justify-between">
+        <div className="bg-[#0A4D9A] text-white px-5 py-3.5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-cyan-300">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">Registrar Nuevo Alquiler</h2>
-              <p className="text-xs text-blue-200">Ingresa los datos para generar el contrato de alquiler</p>
+              <h2 className="text-base sm:text-lg font-bold">Registrar Nuevo Alquiler</h2>
+              <p className="text-[11px] text-blue-200">Generar contrato de alquiler</p>
             </div>
           </div>
           <button
@@ -231,7 +231,7 @@ export const RegisterRentalModal: React.FC<RegisterRentalModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {errorMessage && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />

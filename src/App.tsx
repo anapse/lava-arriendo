@@ -407,7 +407,12 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'configuracion' && <SettingsView />}
+            {activeTab === 'configuracion' && (
+              <SettingsView
+                washers={washers}
+                onSaveWasher={handleSaveWasher}
+              />
+            )}
           </main>
         </div>
       </div>

@@ -70,17 +70,17 @@ export const ReturnRentalModal: React.FC<ReturnRentalModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="bg-emerald-600 text-white px-6 py-4 flex items-center justify-between">
+        <div className="bg-emerald-600 text-white px-5 py-3.5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white">
               <RotateCcw className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">Registrar Devolución</h2>
-              <p className="text-xs text-emerald-100">La lavadora quedará disponible inmediatamente en el sistema</p>
+              <h2 className="text-base sm:text-lg font-bold">Registrar Devolución</h2>
+              <p className="text-[11px] text-emerald-100">Liberar lavadora en el sistema</p>
             </div>
           </div>
           <button
@@ -92,7 +92,7 @@ export const ReturnRentalModal: React.FC<ReturnRentalModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleConfirm} className="p-6 space-y-4">
+        <form onSubmit={handleConfirm} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {/* Summary Card */}
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
             <div className="flex justify-between items-center text-xs">
