@@ -29,6 +29,7 @@ export const EditRentalModal: React.FC<EditRentalModalProps> = ({
   const [advancePayment, setAdvancePayment] = useState<number>(rental.advancePayment);
   const [deliveryType, setDeliveryType] = useState<'En tienda / Local' | 'A domicilio'>(rental.deliveryType);
   const [deliveryFee, setDeliveryFee] = useState<number>(rental.deliveryFee || 0);
+  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export const EditRentalModal: React.FC<EditRentalModalProps> = ({
       setAdvancePayment(rental.advancePayment);
       setDeliveryType(rental.deliveryType);
       setDeliveryFee(rental.deliveryFee || 0);
+      setShowCancelModal(false);
     }
   }, [rental]);
 
@@ -83,17 +85,16 @@ export const EditRentalModal: React.FC<EditRentalModalProps> = ({
     }
   };
 
-  const handleCancel = async () => {
-    if (confirm(`¿Estás seguro de cancelar este alquiler #${rental.id}? La lavadora #${rental.washerId} quedará disponible inmediatamente.`)) {
-      try {
-        setIsSubmitting(true);
-        await onCancelRental(rental.id, rental.washerId);
-        setIsSubmitting(false);
-        onClose();
-      } catch (err) {
-        setIsSubmitting(false);
-        console.error(err);
-      }
+  const handleConfirmCancel = async () => {
+    try {
+      setIsSubmitting(true);
+      await onCancelRental(rental.id, rental.washerId);
+      setIsSubmitting(false);
+      setShowCancelModal(false);
+      onClose();
+    } catch (err) {
+      setIsSubmitting(false);
+      console.error(err);
     }
   };
 
@@ -217,7 +218,7 @@ export const EditRentalModal: React.FC<EditRentalModalProps> = ({
           <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
             <button
               type="button"
-              onClick={handleCancel}
+              onClick={() => setShowCancelModal(true)}
               className="px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Ban className="w-4 h-4" />
@@ -243,6 +244,40 @@ export const EditRentalModal: React.FC<EditRentalModalProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Confirmation Modal for Cancellation / Deletion */}
+      {showCancelModal && (
+        <div className="absolute inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150 text-center">
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-sm">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-slate-900 text-base">¿Cancelar y Anular Alquiler #{rental.id}?</h4>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                La lavadora <strong className="text-slate-800 font-mono">#{rental.washerId}</strong> quedará disponible inmediatamente y el monto total de <strong className="text-rose-700">{formatCOP(rental.totalAmount)}</strong> se descontará de los ingresos y totales registrados.
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 text-xs"
+              >
+                No, volver
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleConfirmCancel}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-500/20"
+              >
+                {isSubmitting ? 'Anulando...' : 'Sí, anular y descontar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

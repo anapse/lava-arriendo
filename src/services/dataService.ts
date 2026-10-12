@@ -404,21 +404,34 @@ export async function returnWasherTransaction(
   washerId: string,
   customerName: string,
   finalBalancePaid?: number,
-  paymentMethod?: Payment['paymentMethod']
+  paymentMethod?: Payment['paymentMethod'],
+  returnDate: string = new Date().toISOString().split('T')[0],
+  actualDays: number = 1,
+  skipRefund: boolean = false,
+  refundAmount: number = 0,
+  proportionalTotal: number = 0,
+  originalDays: number = 1
 ): Promise<void> {
   const rentalRef = doc(db, 'rentals', rentalId);
   const washerRef = doc(db, 'washers', washerId);
   const now = new Date();
-  const returnDateStr = now.toISOString().split('T')[0];
 
   try {
-    // 1. Complete rental
-    await updateDoc(rentalRef, {
+    const isEarly = actualDays < originalDays;
+
+    const updatePayload: any = {
       status: 'finalizado',
-      returnDate: returnDateStr,
+      returnDate: returnDate,
+      days: actualDays,
       balanceDue: 0,
       updatedAt: now.toISOString(),
-    });
+    };
+    if (isEarly) {
+      updatePayload.totalAmount = proportionalTotal;
+    }
+
+    // 1. Complete rental
+    await updateDoc(rentalRef, updatePayload);
 
     // 2. Return washer to disponible
     await updateDoc(washerRef, {
@@ -435,7 +448,7 @@ export async function returnWasherTransaction(
         customerId: 'C-RET',
         customerName: customerName,
         amount: finalBalancePaid,
-        date: returnDateStr,
+        date: returnDate,
         time: now.toTimeString().slice(0, 5),
         paymentMethod: paymentMethod,
         status: 'Pagado',
@@ -446,12 +459,32 @@ export async function returnWasherTransaction(
       await setDoc(doc(db, 'payments', paymentId), payment);
     }
 
-    // 4. Log activity
+    // 4. If there is a refund and skipRefund is false
+    if (refundAmount > 0 && !skipRefund) {
+      const refundPaymentId = 'P' + Math.floor(1000 + Math.random() * 9000);
+      const refundPayment: Payment = {
+        id: refundPaymentId,
+        rentalId: rentalId,
+        customerId: 'C-REF',
+        customerName: customerName,
+        amount: -refundAmount,
+        date: returnDate,
+        time: now.toTimeString().slice(0, 5),
+        paymentMethod: paymentMethod || 'Efectivo',
+        status: 'Pagado',
+        referenceOrVoucher: `DEV-${rentalId}`,
+        notes: `Devolución de dinero por días no usados (${rentalId})`,
+        createdAt: now.toISOString(),
+      };
+      await setDoc(doc(db, 'payments', refundPaymentId), refundPayment);
+    }
+
+    // 5. Log activity
     const actId = 'ACT-' + Date.now();
     const activity: Activity = {
       id: actId,
       type: 'devolucion',
-      description: `Devolución completada - Lavadora #${washerId} recibida de ${customerName}`,
+      description: `Devolución completada - Lavadora #${washerId} recibida de ${customerName} (${actualDays} días)${skipRefund ? ' [Sin reembolso]' : refundAmount > 0 ? ` [Reembolso: $${refundAmount}]` : ''}`,
       timestamp: now.toLocaleString('es-CO'),
       relatedId: rentalId,
     };

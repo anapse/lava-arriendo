@@ -45,13 +45,51 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
 
   const totalCollected = payments.reduce((acc, p) => (p.status === 'Pagado' ? acc + p.amount : acc), 0);
 
+  const pendingRentals = rentals.filter(
+    (r) => r.status !== 'finalizado' && r.status !== 'cancelado' && r.balanceDue > 0
+  );
+
+  const handleOpenModal = () => {
+    if (pendingRentals.length === 0) {
+      alert('¡No hay pagos pendientes! Todas las lavadoras alquiladas están al día y no tienen saldo por cobrar.');
+      return;
+    }
+    // Select first pending rental by default
+    const first = pendingRentals[0];
+    if (first) {
+      setRentalId(first.id);
+      setCustomerName(first.customerName);
+      setAmount(first.balanceDue);
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleRentalSelect = (selectedId: string) => {
+    setRentalId(selectedId);
+    const found = pendingRentals.find((r) => r.id === selectedId);
+    if (found) {
+      setCustomerName(found.customerName);
+      setAmount(found.balanceDue);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!rentalId) {
+      alert('Debe seleccionar un contrato de alquiler con saldo pendiente.');
+      return;
+    }
+    const targetRental = pendingRentals.find(r => r.id === rentalId);
+    if (targetRental && amount > targetRental.balanceDue) {
+      alert(`El monto ingresado (${formatCOP(amount)}) supera el saldo pendiente del contrato (${formatCOP(targetRental.balanceDue)}).`);
+      return;
+    }
+
     const pid = 'P' + Math.floor(100 + Math.random() * 900);
     const newPayment: Payment = {
       id: pid,
       rentalId: rentalId || undefined,
-      customerId: 'C-GEN',
+      customerId: targetRental ? targetRental.customerId : 'C-GEN',
       customerName,
       amount,
       date: todayStr,
@@ -59,7 +97,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
       paymentMethod,
       status: 'Pagado',
       referenceOrVoucher: referenceOrVoucher || `REC-${pid}`,
-      notes,
+      notes: notes || `Abono/Pago contrato ${rentalId}`,
       createdAt: new Date().toISOString(),
     };
     await onSavePayment(newPayment);
@@ -100,7 +138,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
           </div>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenModal}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -249,16 +287,22 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Nro. Contrato Alquiler (Opcional)</label>
-                  <input
-                    type="text"
+                  <label className="block font-semibold text-slate-700 mb-1">Contrato Alquiler Pendiente *</label>
+                  <select
                     value={rentalId}
-                    onChange={(e) => setRentalId(e.target.value)}
-                    placeholder="Ej: A001"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 font-mono"
-                  />
+                    onChange={(e) => handleRentalSelect(e.target.value)}
+                    required
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  >
+                    <option value="">-- Seleccionar contrato con saldo pendiente --</option>
+                    {pendingRentals.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        #{r.id} - {r.customerName} ({r.washerModel}) [Saldo: {formatCOP(r.balanceDue)}]
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Comprobante / Nro. Transacción</label>

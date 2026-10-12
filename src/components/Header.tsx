@@ -123,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="hidden xl:block text-left">
               <p className="text-xs font-bold text-slate-800 leading-tight">
-                {currentUser?.email || 'anapse_video@hotmail.com'}
+                {currentUser?.name || 'Administrador'}
               </p>
               <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> {currentUser?.role || 'Dueño Principal'}

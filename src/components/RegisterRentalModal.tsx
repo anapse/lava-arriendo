@@ -55,11 +55,24 @@ export const RegisterRentalModal: React.FC<RegisterRentalModalProps> = ({
   
   const [deliveryType, setDeliveryType] = useState<'En tienda / Local' | 'A domicilio'>('En tienda / Local');
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
+
+  const subtotal = days * pricePerDay;
+  const totalAmount = subtotal + (deliveryType === 'A domicilio' ? deliveryFee : 0);
   
   const [advancePayment, setAdvancePayment] = useState<number>(0);
   const [advanceMethod, setAdvanceMethod] = useState<PaymentMethod>('Efectivo');
   const [advanceRef, setAdvanceRef] = useState<string>('');
+  const [paymentMode, setPaymentMode] = useState<'adelantado' | 'devolver' | 'despues'>('adelantado');
   const [observations, setObservations] = useState<string>('');
+
+  // Sync advance payment with total amount when paymentMode is adelantado
+  useEffect(() => {
+    if (paymentMode === 'adelantado') {
+      setAdvancePayment(totalAmount);
+    } else {
+      setAdvancePayment(0);
+    }
+  }, [totalAmount, paymentMode]);
   
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -116,17 +129,8 @@ export const RegisterRentalModal: React.FC<RegisterRentalModalProps> = ({
     setDays(diff);
   };
 
-  // Calculate totals
-  const subtotal = days * pricePerDay;
-  const totalAmount = subtotal + (deliveryType === 'A domicilio' ? deliveryFee : 0);
+  // Calculate balance due
   const balanceDue = Math.max(0, totalAmount - advancePayment);
-
-  // Auto-set initial advance payment to full total when totalAmount changes if advance was untouched
-  useEffect(() => {
-    if (advancePayment === 0) {
-      setAdvancePayment(totalAmount);
-    }
-  }, [totalAmount]);
 
   if (!isOpen) return null;
 
@@ -485,8 +489,61 @@ export const RegisterRentalModal: React.FC<RegisterRentalModalProps> = ({
           </div>
 
           {/* Section 4: Liquidación y Pago */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200 space-y-4">
+            {/* Modalidad de pago al registrar alquiler */}
+            <div>
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                Modalidad de Pago del Alquiler *
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMode('adelantado')}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all text-left flex flex-col gap-0.5 cursor-pointer ${
+                    paymentMode === 'adelantado'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>Pagar por adelantado</span>
+                  <span className={`text-[10px] font-normal ${paymentMode === 'adelantado' ? 'text-emerald-100' : 'text-slate-500'}`}>
+                    Se registra como PAGADA ({formatCOP(totalAmount)})
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMode('devolver')}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all text-left flex flex-col gap-0.5 cursor-pointer ${
+                    paymentMode === 'devolver'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>Pagar al devolver</span>
+                  <span className={`text-[10px] font-normal ${paymentMode === 'devolver' ? 'text-blue-100' : 'text-slate-500'}`}>
+                    Saldo pendiente al retornar máquina
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMode('despues')}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all text-left flex flex-col gap-0.5 cursor-pointer ${
+                    paymentMode === 'despues'
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>Pagar después</span>
+                  <span className={`text-[10px] font-normal ${paymentMode === 'despues' ? 'text-amber-100' : 'text-slate-500'}`}>
+                    Crédito / Pendiente de cobro
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-xs">
                 <span className="text-[11px] font-bold text-slate-500 uppercase">Subtotal Alquiler</span>
                 <p className="text-sm font-semibold text-slate-800">{days} días × {formatCOP(pricePerDay)}</p>

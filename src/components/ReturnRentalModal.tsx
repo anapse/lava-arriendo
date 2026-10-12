@@ -5,11 +5,12 @@ import {
   WashingMachine, 
   DollarSign, 
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  Calendar
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Rental, PaymentMethod } from '../types';
-import { formatCOP } from '../utils/formatters';
+import { formatCOP, calculateDaysBetween } from '../utils/formatters';
 
 interface ReturnRentalModalProps {
   rental: Rental | null;
@@ -20,7 +21,11 @@ interface ReturnRentalModalProps {
     washerId: string,
     customerName: string,
     finalBalancePaid?: number,
-    paymentMethod?: PaymentMethod
+    paymentMethod?: PaymentMethod,
+    returnDate?: string,
+    actualDays?: number,
+    skipRefund?: boolean,
+    refundAmount?: number
   ) => Promise<void>;
 }
 
@@ -32,6 +37,16 @@ export const ReturnRentalModal: React.FC<ReturnRentalModalProps> = ({
 }) => {
   if (!isOpen || !rental) return null;
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [returnDate, setReturnDate] = useState<string>(todayStr);
+
+  // Calculate actual days used from rental.startDate to returnDate
+  const actualDays = Math.max(1, calculateDaysBetween(rental.startDate, returnDate));
+  const proportionalTotal = (actualDays * rental.pricePerDay) + (rental.deliveryFee || 0);
+  const totalPaid = rental.advancePayment; // Amount paid so far
+  const potentialRefund = totalPaid > proportionalTotal ? totalPaid - proportionalTotal : 0;
+
+  const [skipRefund, setSkipRefund] = useState<boolean>(false);
   const [collectBalance, setCollectBalance] = useState<boolean>(rental.balanceDue > 0);
   const [balanceAmount, setBalanceAmount] = useState<number>(rental.balanceDue);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Efectivo');
@@ -47,7 +62,11 @@ export const ReturnRentalModal: React.FC<ReturnRentalModalProps> = ({
         rental.washerId,
         rental.customerName,
         collectBalance ? balanceAmount : 0,
-        paymentMethod
+        paymentMethod,
+        returnDate,
+        actualDays,
+        skipRefund,
+        potentialRefund
       );
 
       // Confetti celebration
@@ -80,7 +99,7 @@ export const ReturnRentalModal: React.FC<ReturnRentalModalProps> = ({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold">Registrar Devolución</h2>
-              <p className="text-[11px] text-emerald-100">Liberar lavadora en el sistema</p>
+              <p className="text-[11px] text-emerald-100">Liberar lavadora y liquidar contrato</p>
             </div>
           </div>
           <button
@@ -104,17 +123,44 @@ export const ReturnRentalModal: React.FC<ReturnRentalModalProps> = ({
               <span className="font-bold text-blue-700">{rental.washerModel}</span>
             </div>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500 font-semibold">Período de alquiler:</span>
+              <span className="text-slate-500 font-semibold">Período original:</span>
               <span className="font-medium text-slate-700">{rental.startDate} al {rental.endDate} ({rental.days} días)</span>
             </div>
+
+            {/* Return Date Selector */}
+            <div className="pt-2 border-t border-slate-200 flex items-center justify-between gap-3">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-emerald-600" />
+                <span>Fecha real de devolución:</span>
+              </label>
+              <input
+                type="date"
+                value={returnDate}
+                min={rental.startDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800"
+              />
+            </div>
+
+            <div className="flex justify-between items-center text-xs pt-1">
+              <span className="text-slate-500 font-semibold">Días efectivos usados:</span>
+              <span className="font-bold text-emerald-700">{actualDays} {actualDays === 1 ? 'día' : 'días'}</span>
+            </div>
+
             <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-200">
-              <span className="text-slate-500 font-semibold">Total del contrato:</span>
+              <span className="text-slate-500 font-semibold">Total original contrato:</span>
               <span className="font-bold text-slate-900">{formatCOP(rental.totalAmount)}</span>
             </div>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500 font-semibold">Adelanto ya recibido:</span>
-              <span className="font-bold text-emerald-700">{formatCOP(rental.advancePayment)}</span>
+              <span className="text-slate-500 font-semibold">Adelanto / Pagado:</span>
+              <span className="font-bold text-emerald-700">{formatCOP(totalPaid)}</span>
             </div>
+            {actualDays < rental.days && (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-semibold">Costo proporcional ({actualDays} días):</span>
+                <span className="font-bold text-blue-700">{formatCOP(proportionalTotal)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-200">
               <span className="font-bold text-slate-800">Saldo pendiente:</span>
               <span className={`font-extrabold ${rental.balanceDue > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
@@ -122,6 +168,32 @@ export const ReturnRentalModal: React.FC<ReturnRentalModalProps> = ({
               </span>
             </div>
           </div>
+
+          {/* Early Return Refund Box */}
+          {actualDays < rental.days && potentialRefund > 0 && (
+            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 space-y-3">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-emerald-700" />
+                <span className="text-xs font-bold text-emerald-900">Devolución Anticipada (Días no usados)</span>
+              </div>
+              <p className="text-xs text-emerald-800">
+                El cliente devolvió la lavadora antes del plazo. El monto a devolver por los días no usados es de{' '}
+                <span className="font-extrabold text-emerald-900">{formatCOP(potentialRefund)}</span>.
+              </p>
+
+              <label className="flex items-center gap-2.5 pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={skipRefund}
+                  onChange={(e) => setSkipRefund(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
+                />
+                <span className="text-xs font-bold text-emerald-900">
+                  Cliente no requiere devolución de dinero (no devolver resto del pago)
+                </span>
+              </label>
+            </div>
+          )}
 
           {/* Settle pending balance */}
           {rental.balanceDue > 0 && (
@@ -206,3 +278,4 @@ export const ReturnRentalModal: React.FC<ReturnRentalModalProps> = ({
     </div>
   );
 };
+

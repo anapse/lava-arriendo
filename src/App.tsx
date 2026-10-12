@@ -60,15 +60,8 @@ import {
 import { initAuth, testConnection } from './firebase';
 
 export default function App() {
-  // Authentication State: Require login upon entering the app
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(() => {
-    try {
-      const saved = sessionStorage.getItem('lavarrienda_session_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  // Authentication State: Always require login upon entering the app
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(null);
 
   // Navigation & Active Tab
   const [activeTab, setActiveTab] = useState<NavigationTab>('inicio');
@@ -187,12 +180,31 @@ export default function App() {
     washerId: string,
     customerName: string,
     finalBalancePaid?: number,
-    paymentMethod?: PaymentMethod
+    paymentMethod?: PaymentMethod,
+    returnDate: string = new Date().toISOString().split('T')[0],
+    actualDays: number = 1,
+    skipRefund: boolean = false,
+    refundAmount: number = 0
   ) => {
-    const returnDate = new Date().toISOString().split('T')[0];
+    const targetRental = rentals.find((r) => r.id === rentalId);
+    const originalDays = targetRental ? targetRental.days : 1;
+    const pricePerDay = targetRental ? targetRental.pricePerDay : 35000;
+    const deliveryFee = targetRental ? targetRental.deliveryFee : 0;
+    const isEarly = actualDays < originalDays;
+    const proportionalTotal = (actualDays * pricePerDay) + deliveryFee;
+
     setRentals((prev) =>
       prev.map((r) =>
-        r.id === rentalId ? { ...r, status: 'finalizado', returnDate, balanceDue: 0 } : r
+        r.id === rentalId
+          ? {
+              ...r,
+              status: 'finalizado',
+              returnDate,
+              days: actualDays,
+              totalAmount: isEarly ? proportionalTotal : r.totalAmount,
+              balanceDue: 0,
+            }
+          : r
       )
     );
     setWashers((prev) =>
@@ -216,12 +228,35 @@ export default function App() {
       setPayments((prev) => [p, ...prev]);
     }
 
+    if (refundAmount > 0 && !skipRefund) {
+      const refundP: Payment = {
+        id: 'P' + Math.floor(100 + Math.random() * 900),
+        rentalId,
+        customerId: 'C-REF',
+        customerName,
+        amount: -refundAmount,
+        date: returnDate,
+        time: new Date().toTimeString().slice(0, 5),
+        paymentMethod: paymentMethod || 'Efectivo',
+        status: 'Pagado',
+        referenceOrVoucher: `DEV-${rentalId}`,
+        notes: `Devolución de dinero por días no usados (${rentalId})`,
+      };
+      setPayments((prev) => [refundP, ...prev]);
+    }
+
     await returnWasherTransaction(
       rentalId,
       washerId,
       customerName,
       finalBalancePaid,
-      paymentMethod
+      paymentMethod,
+      returnDate,
+      actualDays,
+      skipRefund,
+      refundAmount,
+      proportionalTotal,
+      originalDays
     );
   };
 
@@ -231,10 +266,13 @@ export default function App() {
 
   const handleCancelRental = async (rentalId: string, washerId: string) => {
     setRentals((prev) =>
-      prev.map((r) => (r.id === rentalId ? { ...r, status: 'cancelado' } : r))
+      prev.map((r) => (r.id === rentalId ? { ...r, status: 'cancelado', balanceDue: 0 } : r))
     );
     setWashers((prev) =>
       prev.map((w) => (w.id === washerId ? { ...w, status: 'disponible' } : w))
+    );
+    setPayments((prev) =>
+      prev.map((p) => (p.rentalId === rentalId ? { ...p, status: 'Anulado' } : p))
     );
   };
 
@@ -264,6 +302,18 @@ export default function App() {
   // Handlers for Payments
   const handleSavePayment = async (payment: Payment) => {
     setPayments((prev) => [payment, ...prev]);
+    if (payment.rentalId) {
+      setRentals((prev) =>
+        prev.map((r) => {
+          if (r.id === payment.rentalId) {
+            const adv = r.advancePayment + payment.amount;
+            const bal = Math.max(0, r.totalAmount - adv);
+            return { ...r, advancePayment: adv, balanceDue: bal, updatedAt: new Date().toISOString() };
+          }
+          return r;
+        })
+      );
+    }
     await savePayment(payment);
   };
 
@@ -272,7 +322,7 @@ export default function App() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] text-slate-800 flex flex-col antialiased selection:bg-blue-600 selection:text-white pb-16 md:pb-0">
+    <div className="min-h-screen bg-[#F4F7FB] text-slate-800 flex flex-col antialiased selection:bg-blue-600 selection:text-white pb-24 md:pb-0">
       <div className="flex flex-1 min-h-screen">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
