@@ -61,21 +61,13 @@ import {
 import { initAuth, testConnection } from './firebase';
 
 export default function App() {
-  // Authentication State for Owner (anapse_video@hotmail.com / 16546203)
+  // Authentication State: Require login upon entering the app
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(() => {
     try {
-      const saved = localStorage.getItem('lavarrienda_auth_user');
-      return saved ? JSON.parse(saved) : {
-        name: 'Dueño Principal',
-        email: 'anapse_video@hotmail.com',
-        role: 'Super Administrador',
-      };
+      const saved = sessionStorage.getItem('lavarrienda_session_user');
+      return saved ? JSON.parse(saved) : null;
     } catch {
-      return {
-        name: 'Dueño Principal',
-        email: 'anapse_video@hotmail.com',
-        role: 'Super Administrador',
-      };
+      return null;
     }
   });
 
@@ -153,6 +145,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('lavarrienda_auth_user');
+    sessionStorage.removeItem('lavarrienda_session_user');
     setCurrentUser(null);
   };
 
