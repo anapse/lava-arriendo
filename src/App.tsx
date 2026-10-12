@@ -10,11 +10,23 @@ import { CalendarView } from './components/CalendarView';
 import { DailyStatusView } from './components/DailyStatusView';
 import { ReportsView } from './components/ReportsView';
 import { SettingsView } from './components/SettingsView';
+import { UsersAdminView } from './components/UsersAdminView';
 import { MobileAppSimulator } from './components/MobileAppSimulator';
 import { RegisterRentalModal } from './components/RegisterRentalModal';
 import { ReturnRentalModal } from './components/ReturnRentalModal';
+import { EditRentalModal } from './components/EditRentalModal';
 import { ReceiptModal } from './components/ReceiptModal';
 import { AlertsModal } from './components/AlertsModal';
+import { LoginScreen } from './components/LoginScreen';
+
+import {
+  Home,
+  FileText,
+  Users,
+  WashingMachine,
+  CreditCard,
+  UserCheck
+} from 'lucide-react';
 
 import {
   Washer,
@@ -49,6 +61,24 @@ import {
 import { initAuth, testConnection } from './firebase';
 
 export default function App() {
+  // Authentication State for Owner (anapse_video@hotmail.com / 16546203)
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(() => {
+    try {
+      const saved = localStorage.getItem('lavarrienda_auth_user');
+      return saved ? JSON.parse(saved) : {
+        name: 'Dueño Principal',
+        email: 'anapse_video@hotmail.com',
+        role: 'Super Administrador',
+      };
+    } catch {
+      return {
+        name: 'Dueño Principal',
+        email: 'anapse_video@hotmail.com',
+        role: 'Super Administrador',
+      };
+    }
+  });
+
   // Navigation & View Mode
   const [activeTab, setActiveTab] = useState<NavigationTab>('inicio');
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
@@ -65,6 +95,7 @@ export default function App() {
   const [isNewRentalOpen, setIsNewRentalOpen] = useState<boolean>(false);
   const [preselectedWasherId, setPreselectedWasherId] = useState<string>('');
   const [rentalToReturn, setRentalToReturn] = useState<Rental | null>(null);
+  const [rentalToEdit, setRentalToEdit] = useState<Rental | null>(null);
   const [rentalForReceipt, setRentalForReceipt] = useState<Rental | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isAlertsOpen, setIsAlertsOpen] = useState<boolean>(false);
@@ -81,7 +112,6 @@ export default function App() {
       try {
         await initAuth();
         await testConnection();
-        // Seed initial data if collections empty
         await seedInitialFirestoreData();
 
         unsubWashers = subscribeToWashers((items) => {
@@ -121,12 +151,21 @@ export default function App() {
     };
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('lavarrienda_auth_user');
+    setCurrentUser(null);
+  };
+
+  // If user is not logged in, render owner login screen
+  if (!currentUser) {
+    return <LoginScreen onLoginSuccess={(u) => setCurrentUser(u)} />;
+  }
+
   // Handlers for Rentals
   const handleSaveRental = async (
     rental: Rental,
     advancePaymentDetails?: { amount: number; paymentMethod: PaymentMethod; reference?: string }
   ) => {
-    // 1. Optimistic local update
     setRentals((prev) => [rental, ...prev]);
     setWashers((prev) =>
       prev.map((w) => (w.id === rental.washerId ? { ...w, status: 'alquilada' } : w))
@@ -144,12 +183,11 @@ export default function App() {
         paymentMethod: advancePaymentDetails.paymentMethod,
         status: 'Pagado',
         referenceOrVoucher: advancePaymentDetails.reference,
-        notes: `Adelanto contrato #${rental.id}`,
+        notes: `Adelanto en efectivo contrato #${rental.id}`,
       };
       setPayments((prev) => [p, ...prev]);
     }
 
-    // 2. Cloud Firestore sync
     await createRentalTransaction(rental, advancePaymentDetails);
   };
 
@@ -160,7 +198,6 @@ export default function App() {
     finalBalancePaid?: number,
     paymentMethod?: PaymentMethod
   ) => {
-    // 1. Optimistic local update
     const returnDate = new Date().toISOString().split('T')[0];
     setRentals((prev) =>
       prev.map((r) =>
@@ -188,13 +225,25 @@ export default function App() {
       setPayments((prev) => [p, ...prev]);
     }
 
-    // 2. Cloud Firestore sync
     await returnWasherTransaction(
       rentalId,
       washerId,
       customerName,
       finalBalancePaid,
       paymentMethod
+    );
+  };
+
+  const handleSaveEditRental = async (updatedRental: Rental) => {
+    setRentals((prev) => prev.map((r) => (r.id === updatedRental.id ? updatedRental : r)));
+  };
+
+  const handleCancelRental = async (rentalId: string, washerId: string) => {
+    setRentals((prev) =>
+      prev.map((r) => (r.id === rentalId ? { ...r, status: 'cancelado' } : r))
+    );
+    setWashers((prev) =>
+      prev.map((w) => (w.id === washerId ? { ...w, status: 'disponible' } : w))
     );
   };
 
@@ -232,9 +281,9 @@ export default function App() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] text-slate-800 flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#F4F7FB] text-slate-800 flex flex-col antialiased selection:bg-blue-600 selection:text-white pb-16 md:pb-0">
       <div className="flex flex-1 min-h-screen">
-        {/* Desktop Sidebar (hidden on mobile simulator if wanted, or persistent) */}
+        {/* Desktop Sidebar */}
         <div className="hidden md:block">
           <Sidebar
             activeTab={activeTab}
@@ -257,10 +306,12 @@ export default function App() {
             setViewMode={setViewMode}
             rentals={rentals}
             onOpenAlertsModal={() => setIsAlertsOpen(true)}
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            onNavigateTab={setActiveTab}
           />
 
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-            {/* If Mobile Simulator view is selected */}
+          <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             {viewMode === 'mobile' ? (
               <MobileAppSimulator
                 washers={washers}
@@ -279,7 +330,6 @@ export default function App() {
               />
             ) : (
               <>
-                {/* Desktop Tab Routing */}
                 {activeTab === 'inicio' && (
                   <DashboardView
                     washers={washers}
@@ -324,7 +374,7 @@ export default function App() {
                     selectedCustomer={selectedCustomer}
                     onSelectCustomer={setSelectedCustomer}
                     onSaveCustomer={handleSaveCustomer}
-                    onStartRentalForCustomer={(cid) => {
+                    onStartRentalForCustomer={() => {
                       setIsNewRentalOpen(true);
                     }}
                   />
@@ -339,6 +389,7 @@ export default function App() {
                     }}
                     onOpenReturnModal={(r) => setRentalToReturn(r)}
                     onOpenReceiptModal={(r) => setRentalForReceipt(r)}
+                    onOpenEditModal={(r) => setRentalToEdit(r)}
                   />
                 )}
 
@@ -378,6 +429,13 @@ export default function App() {
                   />
                 )}
 
+                {activeTab === 'usuarios' && (
+                  <UsersAdminView
+                    currentUser={currentUser}
+                    onLogout={handleLogout}
+                  />
+                )}
+
                 {activeTab === 'configuracion' && <SettingsView />}
               </>
             )}
@@ -385,7 +443,71 @@ export default function App() {
         </div>
       </div>
 
-      {/* Global Modals */}
+      {/* Native Mobile Bottom Navigation Bar (Visible on mobile screens) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around z-40 shadow-lg text-[10px] font-bold">
+        <button
+          onClick={() => setActiveTab('inicio')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg ${
+            activeTab === 'inicio' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
+          }`}
+        >
+          <Home className="w-5 h-5" />
+          <span>Inicio</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('alquileres')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg ${
+            activeTab === 'alquileres' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
+          }`}
+        >
+          <FileText className="w-5 h-5" />
+          <span>Alquileres</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setPreselectedWasherId('');
+            setIsNewRentalOpen(true);
+          }}
+          className="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-500/40 active:scale-95 transition-transform"
+          title="Nuevo Alquiler"
+        >
+          <span className="text-2xl font-light leading-none">+</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('lavadoras')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg ${
+            activeTab === 'lavadoras' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
+          }`}
+        >
+          <WashingMachine className="w-5 h-5" />
+          <span>Lavadoras</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('pagos')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg ${
+            activeTab === 'pagos' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
+          }`}
+        >
+          <CreditCard className="w-5 h-5" />
+          <span>Pagos</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('usuarios')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg ${
+            activeTab === 'usuarios' ? 'text-blue-600 font-extrabold' : 'text-slate-500'
+          }`}
+        >
+          <UserCheck className="w-5 h-5" />
+          <span>Dueño</span>
+        </button>
+      </nav>
+
+      {/* Global Modals for All Operations */}
       <RegisterRentalModal
         isOpen={isNewRentalOpen}
         onClose={() => setIsNewRentalOpen(false)}
@@ -404,6 +526,14 @@ export default function App() {
         isOpen={Boolean(rentalToReturn)}
         onClose={() => setRentalToReturn(null)}
         onConfirmReturn={handleConfirmReturn}
+      />
+
+      <EditRentalModal
+        rental={rentalToEdit}
+        isOpen={Boolean(rentalToEdit)}
+        onClose={() => setRentalToEdit(null)}
+        onSaveEdit={handleSaveEditRental}
+        onCancelRental={handleCancelRental}
       />
 
       <ReceiptModal

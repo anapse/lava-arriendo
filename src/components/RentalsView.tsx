@@ -9,7 +9,8 @@ import {
   Clock, 
   CheckCircle, 
   AlertCircle,
-  Filter
+  Filter,
+  Edit
 } from 'lucide-react';
 import { Rental } from '../types';
 import { formatCOP, getComputedRentalStatus } from '../utils/formatters';
@@ -19,6 +20,7 @@ interface RentalsViewProps {
   onOpenNewRental: () => void;
   onOpenReturnModal: (rental: Rental) => void;
   onOpenReceiptModal: (rental: Rental) => void;
+  onOpenEditModal?: (rental: Rental) => void;
 }
 
 export const RentalsView: React.FC<RentalsViewProps> = ({
@@ -26,6 +28,7 @@ export const RentalsView: React.FC<RentalsViewProps> = ({
   onOpenNewRental,
   onOpenReturnModal,
   onOpenReceiptModal,
+  onOpenEditModal,
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'en_curso' | 'por_vencer' | 'vencido' | 'finalizado'>('todos');
@@ -233,6 +236,17 @@ export const RentalsView: React.FC<RentalsViewProps> = ({
                             >
                               <RotateCcw className="w-3 h-3" />
                               <span>Devolver</span>
+                            </button>
+                          )}
+
+                          {/* Editar / Modificar Contrato */}
+                          {!isReturned && onOpenEditModal && (
+                            <button
+                              onClick={() => onOpenEditModal(r)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                              title="Modificar fechas o cancelar alquiler"
+                            >
+                              <Edit className="w-4 h-4" />
                             </button>
                           )}
 

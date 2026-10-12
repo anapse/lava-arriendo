@@ -7,7 +7,9 @@ import {
   Monitor, 
   Bell, 
   ShieldCheck,
-  CreditCard
+  CreditCard,
+  LogOut,
+  UserCheck
 } from 'lucide-react';
 import { Rental } from '../types';
 import { getComputedRentalStatus } from '../utils/formatters';
@@ -19,6 +21,9 @@ interface HeaderProps {
   setViewMode: (mode: 'desktop' | 'mobile') => void;
   rentals: Rental[];
   onOpenAlertsModal: () => void;
+  currentUser?: { name: string; email: string; role: string };
+  onLogout?: () => void;
+  onNavigateTab?: (tab: any) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,6 +33,9 @@ export const Header: React.FC<HeaderProps> = ({
   setViewMode,
   rentals,
   onOpenAlertsModal,
+  currentUser,
+  onLogout,
+  onNavigateTab,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -130,17 +138,35 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Registrar Alquiler</span>
         </button>
 
-        {/* Admin profile */}
-        <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-xs">
-            A
-          </div>
-          <div className="hidden xl:block text-left">
-            <p className="text-xs font-bold text-slate-800 leading-tight">Administrador</p>
-            <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> En línea
-            </p>
-          </div>
+        {/* Admin profile & Logout */}
+        <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+          <button
+            onClick={() => onNavigateTab && onNavigateTab('usuarios')}
+            className="flex items-center gap-2 hover:opacity-85 transition-opacity text-left cursor-pointer"
+            title="Ir al panel de usuarios y administradores"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-xs">
+              {currentUser?.name?.charAt(0) || 'D'}
+            </div>
+            <div className="hidden xl:block text-left">
+              <p className="text-xs font-bold text-slate-800 leading-tight">
+                {currentUser?.email || 'anapse_video@hotmail.com'}
+              </p>
+              <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> {currentUser?.role || 'Dueño Principal'}
+              </p>
+            </div>
+          </button>
+
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-1 cursor-pointer"
+              title="Cerrar sesión"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </header>

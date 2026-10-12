@@ -80,10 +80,20 @@ export interface Payment {
 
 export interface Activity {
   id: string;
-  type: 'nuevo_alquiler' | 'pago_registrado' | 'devolucion' | 'nuevo_cliente' | 'mantenimiento';
+  type: 'nuevo_alquiler' | 'pago_registrado' | 'devolucion' | 'nuevo_cliente' | 'mantenimiento' | 'usuario_admin';
   description: string;
   timestamp: string;
   relatedId?: string;
+}
+
+export interface UserAdmin {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Super Administrador' | 'Administrador' | 'Operador';
+  passwordHint?: string;
+  lastLogin?: string;
+  createdAt: string;
 }
 
 export type NavigationTab = 
@@ -95,4 +105,5 @@ export type NavigationTab =
   | 'calendario' 
   | 'estado' 
   | 'reportes'
+  | 'usuarios'
   | 'configuracion';

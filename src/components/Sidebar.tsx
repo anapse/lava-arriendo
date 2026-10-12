@@ -9,7 +9,8 @@ import {
   TrendingUp, 
   Settings,
   Sparkles,
-  CloudCheck
+  CloudCheck,
+  UserCheck
 } from 'lucide-react';
 import { NavigationTab } from '../types';
 
@@ -33,10 +34,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'lavadoras', label: 'Lavadoras', icon: <WashingMachine className="w-5 h-5" />, badge: washersCount },
     { id: 'clientes', label: 'Clientes', icon: <Users className="w-5 h-5" /> },
     { id: 'alquileres', label: 'Alquileres', icon: <FileText className="w-5 h-5" />, badge: activeRentalsCount },
-    { id: 'pagos', label: 'Pagos', icon: <CreditCard className="w-5 h-5" /> },
+    { id: 'pagos', label: 'Pagos (Efectivo)', icon: <CreditCard className="w-5 h-5" /> },
     { id: 'calendario', label: 'Calendario', icon: <BarChart3 className="w-5 h-5" /> },
     { id: 'estado', label: 'Estado del día', icon: <TrendingUp className="w-5 h-5" /> },
     { id: 'reportes', label: 'Reportes', icon: <Sparkles className="w-5 h-5" /> },
+    { id: 'usuarios', label: 'Usuarios / Dueño', icon: <UserCheck className="w-5 h-5" /> },
     { id: 'configuracion', label: 'Configuración / Datos', icon: <Settings className="w-5 h-5" /> },
   ];
 
